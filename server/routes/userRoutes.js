@@ -13,11 +13,15 @@ router.patch('/resetPassword/:token', authController.resetPassword);
 
 router.use(authController.protect)
 
+router.post('/assign/:id', userController.assignStudentsToSupervisor);
+router.get('/sup', userController.getSupervisor);
+router.get('/allsups', userController.getAllSupervisors);
+router.get('/unassigned', userController.getUnassignedStudents);
 
 router.patch(
   '/updateMe',
   userController.uploadUserPhoto,
-  userController.resizeUserPhoto,
+  // userController.resizeUserPhoto,
   userController.updateMe
 );
 

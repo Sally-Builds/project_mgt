@@ -1,28 +1,23 @@
 const mongoose = require('mongoose');
 
 const projectSchema = new mongoose.Schema({
-    topic: {
+    title: {
         type: String,
-        required: [true, 'Please provide a Project title'],
-        unique: true
+        required: [true, 'Project topic is required']
     },
-    student: {
-        type:  mongoose.Types.ObjectId,
-        ref: 'User'
-    },
+    description: String,
     projectFile: {
         type: String,
     },
     status: {
         type: String,
-        enum: ['pending', 'approved', 'decline'],
+        enum: ['pending', 'approved', 'declined'],
         default: 'pending'
     },
-    projectAssign: {
+    student: {
         type: mongoose.Types.ObjectId,
-        required: [true, 'Please provide a Project assignment'],
-        ref: 'ProjectAssignment'
-    }
+        ref: 'User',
+    },
 })
 
 const Project = mongoose.model('Project', projectSchema)

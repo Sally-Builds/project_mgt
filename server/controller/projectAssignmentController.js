@@ -22,12 +22,11 @@ exports.assignSupervision = catchAsync(async(req, res, next) => {
 
 //get Blog
 exports.getProjectAssignment = catchAsync(async(req, res, next) => {
-    console.log(req.user.id)
-    const projectAssignment = await ProjectAssignment.findOne({supervisor: req.user.id}).populate('supervisee.projects')
+    const projectAssignment = await ProjectAssignment.findOne({supervisor: req.user.id})
 
-    if(!projectAssignment){
-        return next(new AppError('No blog found with that slug', 404))
-    }
+    // if(!projectAssignment){
+    //     return next(new AppError('No blog found with that slug', 404))
+    // }
 
     res.status(200).json({
         status: 'success',

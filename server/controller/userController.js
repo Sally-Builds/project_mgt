@@ -1,41 +1,27 @@
+const path = require('path')
 const multer = require('multer');
-const sharp = require('sharp');
 const User = require('../models/userModel');
+const ProjectAssign = require('../models/projectAssignmentModel')
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 
 
 
-const multerStorage = multer.memoryStorage();
-
-const multerFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
-    cb(null, true);
-  } else {
-    cb(new AppError('Not an image! Please upload only images.', 400), false);
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, '../public'))
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
+    req.body.projectFile = 'user' + '-' + req.user.id + '-file-' + uniqueSuffix + '.pdf'
+    cb(null, 'user' + '-' + req.user.id + '-file-' + uniqueSuffix + '.pdf')
   }
-};
+})
 
-const upload = multer({
-  storage: multerStorage,
-  fileFilter: multerFilter
-});
+exports.uploadUserPhoto = multer({
+  storage,
+}).single('projectFile');
 
-exports.uploadUserPhoto = upload.single('photo');
-
-exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
-  if (!req.file) return next();
-
-  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
-
-  await sharp(req.file.buffer)
-    .resize(500, 500)
-    .toFormat('jpeg')
-    .jpeg({ quality: 90 })
-    .toFile(`public/img/users/${req.file.filename}`);
-
-  next();
-});
 
 const filterObj = (obj, ...allowedFields) => {
   const newObj = {};
@@ -61,11 +47,11 @@ exports.updateMe = catchAsync(async (req, res, next) => {
     );
   }
 
-  // 2) Filtered out unwanted fields names that are not allowed to be updated
+  // // 2) Filtered out unwanted fields names that are not allowed to be updated
   const filteredBody = filterObj(req.body, 'name', 'email');
-  if (req.file) filteredBody.photo = req.file.filename;
+  if (req.file) filteredBody.projectFile = req.body.projectFile;
 
-  // 3) Update user document
+  // // 3) Update user document
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
     new: true,
     runValidators: true
@@ -83,7 +69,7 @@ exports.updateMe = catchAsync(async (req, res, next) => {
 
 //get All Users
 exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const users = await User.find();
+  const users = await User.find({});
 
   res.status(201).json({
     status: 'successful',
@@ -114,6 +100,81 @@ exports.deleteUser = catchAsync(async(req, res, next) => {
     data: null,
   });
 })
+
+exports.assignStudentsToSupervisor = catchAsync(async(req, res, next) => {
+  const existingSupervises = await ProjectAssign.findOne({supervisee: {"$in": req.body.supervisee}}).populate('supervisee');
+  
+  if(existingSupervises) {
+    existingSupervises.supervisee.forEach(e => {
+      for(let i = 0; i<req.body.supervisee.length; i++) {
+        if(req.body.supervisee[i] == e.id) {
+          req.body.supervisee = req.body.supervisee.filter(el => el != e.id )
+        }
+      }
+    })
+  }
+
+  const data = await ProjectAssign.findOneAndUpdate({supervisor: req.params.id}, {
+    $push: { supervisee: { $each: req.body.supervisee } }
+  }, {new: true})
+
+  res.status(200).json({
+    status: 'success',
+    data,
+  });
+})
+
+exports.getSupervisor = catchAsync(async(req, res, next) => {
+  const data = await ProjectAssign.findOne({supervisee: {"$in": [req.user.id]}}).populate('supervisor');
+
+  res.status(200).json({
+    status: 'success',
+    name: data.supervisor.fullName,
+  })
+})
+
+exports.getAllSupervisors = catchAsync(async(req, res, next) => {
+  let data = await ProjectAssign.find({}).populate('supervisor');
+
+
+  if(data) {
+    data = data.map((el) => ({name: el.supervisor.fullName, id: el.supervisor.id, numOfSup: el.supervisee.length}))
+  }
+
+  res.status(200).json({
+    status: 'success',
+    data,
+  })
+})
+
+//get unassigned students
+exports.getUnassignedStudents = catchAsync(async(req, res, next) => {
+  const data = await ProjectAssign.find({})
+  let users = await User.find({role: 'student'})
+  let assigned = []
+  let unassigned = []
+  if(data) {
+    data.forEach(el => {
+      el.supervisee.forEach((e) => {
+        assigned.push(e)
+      })
+    })
+
+    users.forEach(e => {
+      if(typeof (assigned.find(el => el._id == e._id.toString())) === 'undefined') {
+        unassigned.push(e)
+      }
+    })
+  }
+
+
+  res.status(200).json({
+    status: 'success',
+    data: unassigned
+  })
+})
+
+//get My Supervisee students
 
 //delete all users
 exports.deleteAllUsers = catchAsync(async(req, res, next) => {

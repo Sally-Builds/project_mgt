@@ -7,7 +7,11 @@ const router = express.Router();
 
 router.use(authController.protect)
 
-
+router.patch(
+  '/upload/:id',
+  projectController.uploadProjectFile,
+  projectController.uploadFile,
+);
 
 router
   .route('/')

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const arrayUniquePlugin = require('mongoose-unique-array');
 
 const projectAssignmentSchema = new mongoose.Schema({
     supervisor: {
@@ -7,27 +8,25 @@ const projectAssignmentSchema = new mongoose.Schema({
         required: [true, 'please provide a supervisor'],
         unique: true
     },
-    supervisee : [
-        {
-            student: {
-                type: mongoose.Types.ObjectId,
-                ref: 'User',
-                required: [true, "please provide at least on student"]
-            },
-            // projects: {
-            //     type: mongoose.Types.ObjectId,
-            //     ref: 'Project'
-            // }
-        }
-    ],
+    supervisee : {
+        type: [mongoose.Types.ObjectId],
+        ref: 'User',
+        required: [true, "please provide at least on student"]
+    },
     notes: [String]
 })
 
-projectAssignmentSchema.virtual('supervisee.projects', {
-    ref: 'Project',
-    localField: '_id',
-    foreignField: 'projectAssign',
-  });
+projectAssignmentSchema.plugin(arrayUniquePlugin);
 
+projectAssignmentSchema.pre(/^find/, async function (next) {
+    this.populate({ 
+        path: 'supervisee',
+        populate: {
+          path: 'projects',
+          model: 'Project'
+        } 
+     })
+    next();
+  });
 const ProjectAssignment = mongoose.model('ProjectAssignment', projectAssignmentSchema)
 module.exports = ProjectAssignment

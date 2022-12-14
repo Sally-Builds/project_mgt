@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const ProjectAssign = require('./projectAssignmentModel')
 
 const userSchema = new mongoose.Schema({
   regNO: {
@@ -48,6 +49,10 @@ const userSchema = new mongoose.Schema({
   },
   passwordResetToken: String,
   passwordResetExpires: Date,
+},
+{
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
 });
 
 //encrypt password
@@ -73,6 +78,13 @@ userSchema.pre('save', function (next) {
   next();
 });
 
+userSchema.pre('save', async function (next) {
+  if(this.role === 'lecturer') {
+    await ProjectAssign.create({supervisor: this.id})
+  }
+  next();
+});
+
 //password changed after
 userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
   if (this.passwordChangedAt) {
@@ -92,7 +104,16 @@ userSchema.pre(/^find/, function(next) {
   next()
 })
 
+userSchema.virtual('projects', {
+  foreignField: 'student',
+  localField: "_id",
+  ref: 'Project'
+})
 
+userSchema.pre(/^find/, function (next) {
+  this.populate('projects')
+  next();
+});
 
 userSchema.methods.createPasswordResetToken = function () {
   const resetToken = crypto.randomBytes(32).toString('hex');
