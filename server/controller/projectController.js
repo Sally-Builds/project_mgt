@@ -68,6 +68,20 @@ exports.getAllProjects = catchAsync(async(req, res, next) => {
 
 })
 
+//Get all Blog
+exports.getAllProjectsAdmin = catchAsync(async(req, res, next) => {
+
+  const projects = await Project.find({status: "approved"});
+  res.status(200).json({
+    status: 'success',
+    results: projects.length,
+    data: {
+      projects
+    }
+  });
+
+})
+
 exports.uploadFile = catchAsync(async(req, res, next) => {
   console.log(req.body)
     const project = await  Project.findOneAndUpdate({student: req.user.id, _id: req.params.id}, req.body, {

@@ -29,11 +29,16 @@ app.use((req, res, next) => {
   next();
 });
 //serving static files
-app.use(express.static(path.join(__dirname, 'public')));
+// app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/projects', projectRouter);
 app.use('/api/v1/projectassigns', projectAssignRouter);
+
+if (true) {
+  app.use(express.static(`${__dirname}/public/`));
+  app.get(/.*/, (req, res) => res.sendFile(`${__dirname}/public/index.html`));
+}
 
 
 app.all('*', (req, res, next) => {

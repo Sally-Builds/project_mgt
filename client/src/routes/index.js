@@ -20,6 +20,7 @@ import Signup from "../containers/Views/Signup";
 import Admin from "../containers/Views/Admin";
 import Student from "../containers/Views/Students";
 import Supervisor from "../containers/Views/Supervisors";
+import Project from "../containers/Views/Projects";
 
 const Router = () => {
   return (
@@ -60,6 +61,7 @@ const Router = () => {
               </LecturerProtected>
             }
           />
+          <Route path="/dashboard/projects" element={<Project />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -13,6 +13,8 @@ router.patch(
   projectController.uploadFile,
 );
 
+router.get('/allprojects', projectController.getAllProjectsAdmin)
+
 router
   .route('/')
   .post(authController.restrictTo('student'), projectController.createProject)

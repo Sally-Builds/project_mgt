@@ -1,21 +1,11 @@
 import React, { useContext } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { UserContext } from "../../context/UserState";
 
 const MainLayout = ({ children }) => {
   // const navigate = useNavigate();
-  const { removeToken, logout } = useContext(UserContext);
-  // const logout = async () => {
-  //   console.log("log");
-  //   try {
-  //     const res = await axios.get("http://localhost:4000/api/v1/users/logout");
-  //     navigate("/");
-  //     removeToken();
-  //     localStorage.removeItem("token");
-  //     console.log(res);
-  //   } catch (e) {}
-  // };
+  const { user, logout } = useContext(UserContext);
+  console.log(user, "from mainlaylout");
   return (
     <div className="grid">
       <div>
@@ -80,33 +70,25 @@ const MainLayout = ({ children }) => {
                 <div className="hidden sm:ml-6 sm:block">
                   <div className="flex space-x-4">
                     <a
-                      href="/"
+                      href={`/dashboard/${user.role}`}
                       className="bg-gray-900 text-white px-3 py-2 rounded-md text-sm font-medium"
                       aria-current="page"
                     >
                       Dashboard
                     </a>
 
-                    <a
-                      href="/"
-                      className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      Team
-                    </a>
-
-                    <a
-                      href="/"
-                      className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      Projects
-                    </a>
-
-                    <a
-                      href="/"
-                      className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      Calendar
-                    </a>
+                    {user.role != "student" ? (
+                      <>
+                        <a
+                          href="/dashboard/projects"
+                          className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
+                        >
+                          Projects
+                        </a>
+                      </>
+                    ) : (
+                      <></>
+                    )}
                   </div>
                 </div>
               </div>
